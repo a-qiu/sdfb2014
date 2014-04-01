@@ -21,6 +21,7 @@ function node() {
 	this.birth = null;
 	this.life = null;
 	this.label = null;
+	this.occupation = null;
 }
 
 // TODO
@@ -29,24 +30,96 @@ function showOneGroup(group, data) {
 	// data.groups_names[group] returns the ID of the group. Example: data.groups_names[Nexgene] returns 1
 
 	// Search for the nodes that belong to a group where id = 1
+
+	id=data.groups_names[group];
+
 	var key = keys[2];
 	var results = [];
 	Tabletop.init({
 		key: key,
 		query: 'group = ' + id,
 		callback: function(result) {
-			result.forEach(function (row){
+			var r = result.groups_nodes.elements;
+			r.forEach( function(row) {
 				// row.node is the id of each node
 				// results.push(data.nodes[row.node]);
+				//console.log(data.nodes[row.node]);
+				results.push(data.nodes[row.node]);
 			});
-			// writeTableWith(results);
+			writeGroupTableWith(results);
 		}
 	});
+
+	$("#results").html("All the members of " + group);
+
+	$("#four").val('');
+	$("#four").typeahead('setQuery', '');
 }
 
 // TODO
 function showTwoGroups(group1, group2, data) {
 
+	id1=data.groups_names[group1];
+	id2=data.groups_names[group2];
+
+	var key1 = keys[2];
+	var key2 = keys[2];
+	var results = [];
+
+	console.log("group1"+group1+"group2"+group2);
+
+	Tabletop.init({//group1
+		key: key1,
+		query: 'group = ' + id1,
+		callback: function(result) {
+			
+			var r1 = result.groups_nodes.elements;
+			console.log(r1);
+			r1.forEach( function(row) {
+			});
+
+			Tabletop.init({ //group2
+				key: key2,
+				query:'group= '+ id2,
+				callback: function(result2) {
+					var r2 = result2.groups_nodes.elements;
+					console.log(r2);
+					//finding the difference
+					var inter = new Array();
+					for( var i=0; i<r1.length;i++){
+				 		for (var j=0; j<r2.length; j++){
+				 
+				 			if(r1[i] === r2[j]){
+				 				inter.push(r1[i]);
+				 				r1.splice(i,1);
+				 				r2.splice(j,1);
+				 				i--;
+				 				j--;
+				 			}
+				 		}
+				 	}
+
+				 	console.log("group1:"+r1+"group2:"+r2+"group1+2"+inter);
+				 	//writeGroupTableWith(results);
+				}
+			});
+		}
+	});
+
+	// var r = result.groups_nodes.elements
+	// 		r.forEach( function(row) {
+	// 			// row.node is the id of each node
+	// 			// results.push(data.nodes[row.node]);
+	// 			//console.log(data.nodes[row.node]);
+	// 			results.push(data.nodes[row.node]);
+	// 		});
+	// 		writeGroupTableWith(results);
+	$("#results").html("The intersection of members of " + group1 +" and "+group2);
+
+	$("#five").val('');
+	$("#five").typeahead('setQuery', '');
+	$("#six").val('');
+	$("#six").typeahead('setQuery', '');
 }
 
 
@@ -74,6 +147,8 @@ function init(result) {
 		}
 		data.nodes[n.id] = n;
 		data.nodes_names[n.label] = n;
+		n.occupation = row.occupation;
+		n.fullname = n.first + n.last;
 	});
 
 	result.groups.elements.forEach(function (row) {
@@ -147,7 +222,7 @@ function initGraph(data){
 		}
 	}
 
-	showRandomNode(data, options);
+	//showRandomNode(data, options);
 
 	$("#findonenode").click(function () {
 		if ($("#one").val()) {
@@ -173,6 +248,23 @@ function initGraph(data){
 		}
 	});
 
+
+
+	$("#findonegroup").click(function () {
+ 		if ($("#four").val()) {
+ 			showOneGroup($("#four").val(), data);
+ 		}
+ 	});
+
+
+ 	$("#findtwogroup").click(function () {
+ 		if ($("#five").val() && $("#six").val()) {
+ 			showTwoGroups($("#five").val(), $("#six").val(), data);
+ 		}
+ 	});
+
+
+
 	$('#submitnode').click(function(){
 		rand = false;
 		var node = $('#entry_1804360896').val() + ' ' + $('#entry_754797571').val() + ' (' + $('#entry_524366257').val() + ')';
@@ -196,11 +288,10 @@ function initGraph(data){
 		Gtemp.add_edges_from([[source, target]]);
 	});
 
-
 }
 
 function showRandomNode(data, options){
-	var parent = data.nodes[Math.floor((Math.random()*9999))].label;
+	var parent = data.nodes[Math.floor((Math.random()*500))].label; // changed to 500 ebecause theres only 500 nodes
 	showOneNode(parent, data, options, true);
 	if (rand) {
 		setTimeout(function(){
@@ -356,6 +447,27 @@ function writeTableWith(dataSource){
         }
     });
 };
+
+
+function writeGroupTableWith(dataSource){
+    $('figure').html('<table cellpadding="0" cellspacing="0" border="0" class="display table table-bordered table-striped" id="data-table-container"></table>');
+    $('#data-table-container').dataTable({
+		'sPaginationType': 'bootstrap',
+		'iDisplayLength': 10,
+        'aaData': dataSource,
+        'aoColumns': [
+            {'mDataProp': 'first', 'sTitle': 'First Name'},
+            {'mDataProp': 'last', 'sTitle': 'Last Name'},
+            {'mDataProp': 'birth', 'sTitle': 'Birth Date'},
+            {'mDataProp': 'occupation', 'sTitle': 'Occupation'}
+            //{'mDataProp': 'group', 'sTitle': 'Groups'} - for all of the groups
+        ],
+        'oLanguage': {
+            'sLengthMenu': '_MENU_ records per page'
+        }
+    });
+};
+
 
 //define two custom functions (asc and desc) for string sorting
 jQuery.fn.dataTableExt.oSort['string-case-asc']  = function(x,y) {
