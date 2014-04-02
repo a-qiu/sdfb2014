@@ -40,9 +40,9 @@ function showOneGroup(group, data) {
 		query: 'group = ' + id,
 		callback: function(result) {
 			var r = result.groups_nodes.elements;
-			r.forEach( function(row) {
+			r.forEach(function(row) {
 				// row.node is the id of each node
-				// results.push(data.nodes[row.node]);
+				//results.push(data.nodes[row.node]);
 				//console.log(data.nodes[row.node]);
 				results.push(data.nodes[row.node]);
 			});
@@ -64,9 +64,11 @@ function showTwoGroups(group1, group2, data) {
 
 	var key1 = keys[2];
 	var key2 = keys[2];
-	var results = [];
+	var results1 = [];
+	var results2 = [];
+	var resultsinter = [];
 
-	console.log("group1"+group1+"group2"+group2);
+	//console.log("group1 "+group1+" group2 "+group2);
 
 	Tabletop.init({//group1
 		key: key1,
@@ -74,22 +76,20 @@ function showTwoGroups(group1, group2, data) {
 		callback: function(result) {
 			
 			var r1 = result.groups_nodes.elements;
-			console.log(r1);
-			r1.forEach( function(row) {
-			});
+
 
 			Tabletop.init({ //group2
 				key: key2,
 				query:'group= '+ id2,
 				callback: function(result2) {
 					var r2 = result2.groups_nodes.elements;
-					console.log(r2);
+
 					//finding the difference
 					var inter = new Array();
 					for( var i=0; i<r1.length;i++){
 				 		for (var j=0; j<r2.length; j++){
-				 
-				 			if(r1[i] === r2[j]){
+
+				 			if(r1[i]["node"] === r2[j]["node"]){
 				 				inter.push(r1[i]);
 				 				r1.splice(i,1);
 				 				r2.splice(j,1);
@@ -99,21 +99,27 @@ function showTwoGroups(group1, group2, data) {
 				 		}
 				 	}
 
-				 	console.log("group1:"+r1+"group2:"+r2+"group1+2"+inter);
-				 	//writeGroupTableWith(results);
+				 	r1.forEach(function(row) {
+						results1.push(data.nodes[row.node]);
+					});
+					r2.forEach(function(row) {
+					
+						results2.push(data.nodes[row.node]);
+					});
+				 	inter.forEach(function(row) {
+			
+						resultsinter.push(data.nodes[row.node]);
+					});
+
+				 	writeMultiGroupTableWith(results1,results2,resultsinter,group1,group2);
+				 	//writeGroupTableWith(results1,1,group1);
+				 	//writeGroupTableWith(results2,2,group2);
+				 	//writeGroupTableWith(resultsinter,0, group1+"and"+group2);
 				}
 			});
 		}
 	});
 
-	// var r = result.groups_nodes.elements
-	// 		r.forEach( function(row) {
-	// 			// row.node is the id of each node
-	// 			// results.push(data.nodes[row.node]);
-	// 			//console.log(data.nodes[row.node]);
-	// 			results.push(data.nodes[row.node]);
-	// 		});
-	// 		writeGroupTableWith(results);
 	$("#results").html("The intersection of members of " + group1 +" and "+group2);
 
 	$("#five").val('');
@@ -451,6 +457,7 @@ function writeTableWith(dataSource){
 
 function writeGroupTableWith(dataSource){
     $('figure').html('<table cellpadding="0" cellspacing="0" border="0" class="display table table-bordered table-striped" id="data-table-container"></table>');
+    
     $('#data-table-container').dataTable({
 		'sPaginationType': 'bootstrap',
 		'iDisplayLength': 10,
@@ -458,7 +465,6 @@ function writeGroupTableWith(dataSource){
         'aoColumns': [
             {'mDataProp': 'first', 'sTitle': 'First Name'},
             {'mDataProp': 'last', 'sTitle': 'Last Name'},
-            {'mDataProp': 'birth', 'sTitle': 'Birth Date'},
             {'mDataProp': 'occupation', 'sTitle': 'Occupation'}
             //{'mDataProp': 'group', 'sTitle': 'Groups'} - for all of the groups
         ],
@@ -467,6 +473,62 @@ function writeGroupTableWith(dataSource){
         }
     });
 };
+
+
+function writeMultiGroupTableWith(dataSource,dataSource2,dataSourceinter,g1,g2){
+    $('figure').html( '<table cellpadding="0" cellspacing="0" border="0" class="display table table-bordered table-striped" id="data-table-container-inter"></table> \n<br><br><br><br><br>'+g1+' Only \n 	<table cellpadding="0" cellspacing="0" border="0" class="display table table-bordered table-striped" id="data-table-container"></table> \n<br><br><br><br><br>'+g2+' Only <br>\n  <table cellpadding="0" cellspacing="0" border="0" class="display table table-bordered table-striped" id="data-table-container-2"></table>');
+    
+
+    $('#data-table-container-inter').dataTable({
+		'sPaginationType': 'bootstrap',
+		'iDisplayLength': 10,
+        'aaData': dataSourceinter,
+        'aoColumns': [
+            {'mDataProp': 'first', 'sTitle': 'First Name'},
+            {'mDataProp': 'last', 'sTitle': 'Last Name'},
+            {'mDataProp': 'occupation', 'sTitle': 'Occupation'}
+            //{'mDataProp': 'group', 'sTitle': 'Groups'} - for all of the groups
+        ],
+        'oLanguage': {
+            'sLengthMenu': '_MENU_ records per page'
+        }
+    });
+
+
+    $('#data-table-container').dataTable({
+		'sPaginationType': 'bootstrap',
+		'iDisplayLength': 10,
+        'aaData': dataSource,
+        'aoColumns': [
+            {'mDataProp': 'first', 'sTitle': 'First Name'},
+            {'mDataProp': 'last', 'sTitle': 'Last Name'},
+            {'mDataProp': 'occupation', 'sTitle': 'Occupation'}
+            //{'mDataProp': 'group', 'sTitle': 'Groups'} - for all of the groups
+        ],
+        'oLanguage': {
+            'sLengthMenu': '_MENU_ records per page'
+        }
+    });
+
+    $('#data-table-container-2').dataTable({
+		'sPaginationType': 'bootstrap',
+		'iDisplayLength': 10,
+        'aaData': dataSource,
+        'aoColumns': [
+            {'mDataProp': 'first', 'sTitle': 'First Name'},
+            {'mDataProp': 'last', 'sTitle': 'Last Name'},
+            {'mDataProp': 'occupation', 'sTitle': 'Occupation'}
+            //{'mDataProp': 'group', 'sTitle': 'Groups'} - for all of the groups
+        ],
+        'oLanguage': {
+            'sLengthMenu': '_MENU_ records per page'
+        }
+    });
+
+
+};
+
+
 
 
 //define two custom functions (asc and desc) for string sorting
